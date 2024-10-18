@@ -4,9 +4,9 @@
 #include <cstring>
 #include <sstream>
 
-// Define basic types for clarity
-typedef unsigned int WORD;  // 32-bit unsigned integer
-typedef unsigned char BYTE; // 8-bit unsigned integer
+
+typedef unsigned int WORD;
+typedef unsigned char BYTE;
 
 // Define round constants (random values for this example)
 static const WORD hash_constants[64] = {
@@ -20,27 +20,22 @@ static const WORD hash_constants[64] = {
     0x99AABBCC, 0xAABBCCDD, 0xBBCCDDEE, 0xCCDDEEFF, 0xDDEEFF00, 0xEEFF0011, 0xFF001122, 0x00112233
 };
 
-// Function to shift bits to the right
 WORD rotate_right(WORD value, WORD bits) {
     return (value >> bits) | (value << (32 - bits));
 }
 
-// Compression function for hashing process
 void process_compression(const BYTE input[], WORD hash_state[8]) {
     WORD message_schedule[64];  // Message schedule array
     WORD a, b, c, d, e, f, g, h;
 
-    // Prepare the message schedule
     for (int i = 0; i < 16; i++) {
         message_schedule[i] = (input[i * 4] << 24) | (input[i * 4 + 1] << 16) | (input[i * 4 + 2] << 8) | input[i * 4 + 3];
     }
 
-    // Expand message schedule
     for (int i = 16; i < 64; i++) {
         message_schedule[i] = message_schedule[i - 16] + message_schedule[i - 7] + rotate_right(message_schedule[i - 15], 7) + rotate_right(message_schedule[i - 2], 17);
     }
 
-    // Initialize working variables to current hash value
     a = hash_state[0];
     b = hash_state[1];
     c = hash_state[2];
@@ -50,7 +45,6 @@ void process_compression(const BYTE input[], WORD hash_state[8]) {
     g = hash_state[6];
     h = hash_state[7];
 
-    // Main compression loop
     for (int i = 0; i < 64; i++) {
         WORD temp_epsilon = rotate_right(e, 6) ^ rotate_right(e, 11) ^ rotate_right(e, 25);
         WORD choice = (e & f) ^ (~e & g);
@@ -69,7 +63,6 @@ void process_compression(const BYTE input[], WORD hash_state[8]) {
         a = temp1 + temp2;
     }
 
-    // Update hash state
     hash_state[0] += a;
     hash_state[1] += b;
     hash_state[2] += c;
@@ -80,14 +73,12 @@ void process_compression(const BYTE input[], WORD hash_state[8]) {
     hash_state[7] += h;
 }
 
-// Function to convert string to BYTE array (padded for simplicity)
 void string_to_bytes(const std::string &input, BYTE output[64]) {
-    memset(output, 0, 64); // Initialize with zeros
+    memset(output, 0, 64);
     size_t copy_length = input.length() < 64 ? input.length() : 64;
-    memcpy(output, input.c_str(), copy_length); // Copy the input string into the output BYTE array
+    memcpy(output, input.c_str(), copy_length);
 }
 
-// Function to format the hash result as a hexadecimal string
 std::string format_hash_result(WORD hash_state[8]) {
     std::stringstream ss;
     for (int i = 0; i < 8; i++) {
@@ -96,23 +87,20 @@ std::string format_hash_result(WORD hash_state[8]) {
     return ss.str();
 }
 
-// Main function to demonstrate SHA-256 process with user input
 int main() {
     std::string user_input;
 
-    // Ask for user input
-    std::cout << "Input: ";
-    std::getline(std::cin, user_input);  // Read the input string
 
-    BYTE data[64]; // Prepare data buffer
-    string_to_bytes(user_input, data); // Convert the user input into a BYTE array
+    std::cout << "Input: ";
+    std::getline(std::cin, user_input);
+
+    BYTE data[64];
+    string_to_bytes(user_input, data);
 
     WORD current_state[8] = {0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19}; // Initial hash values
 
-    // Apply the compression step
     process_compression(data, current_state);
 
-    // Format and output the final hash result
     std::string hash_result = format_hash_result(current_state);
     std::cout << "SHA-256 Hash: " << hash_result << std::endl;
 
